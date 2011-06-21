@@ -1,0 +1,33 @@
+====================================
+ Facebook Authentication Module 0.1
+         For SilverStripe
+====================================
+Developed and maintained by RentBox
+ support@rentbox.co.nz/@rentboxapp
+====================================
+
+This module is (currently) not a simple drop in module.
+
+Requirements:
+* Facebook application id/secret
+	- https://www.facebook.com/developers/apps.php
+
+Installation:
+- Extract facebook folder to your site root
+- Provide your application id/secret using the provided methods
+	(FacebookCallback::set_facebook_id/secret)
+- Run /dev/build
+
+This adds two extra fields to the Member table, FacebookID and FacebookName.
+OAuth tokens *are not* stored. You can not use this module for communicating
+with Facebook beyond the sign in process.
+
+This module currently does not provide a way for users to set these values.
+YOU MUST PROVIDE THIS USING THE AVAILABLE METHODS.
+
+This is done by providing a way for users to call connectUser() on a
+FacebookCallback object. This method is not accessible via a URL so you
+must provide this. An action that returns
+singleton('FacebookCallback')->connectUser($this->Link('FinishFacebook'))
+should be all that is needed. The argument to connectUser() is the URL to
+redirect to once the Member record has been updated.
