@@ -36,6 +36,9 @@ class FacebookCallback extends Controller {
 		if($user) {
 			try {
 				$user_profile = $facebook->api('/me');
+				if(isset($user_profile->error)) {
+					$user = null;
+				}
 			} catch(FacebookApiException $e) {
 				$user = null;
 			}
@@ -59,6 +62,9 @@ class FacebookCallback extends Controller {
 		if($user) {
 			try {
 				$user_profile = $facebook->api('/me');
+				if(isset($user_profile->error)) {
+					$user = null;
+				}
 			} catch(FacebookApiException $e) {
 				$user = null;
 			}
@@ -91,6 +97,9 @@ class FacebookCallback extends Controller {
 		if($user) {
 			try {
 				$data = $facebook->api('/me');
+				if(isset($data->error)) {
+					$user = null;
+				}
 			} catch(FacebookApiException $e) {
 				$user = null;
 			}
@@ -111,6 +120,7 @@ class FacebookCallback extends Controller {
 			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
 			return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
 		}
+		
 		if($u->FacebookName != $data->name) {
 			$u->FacebookName = $data->name;
 			$u->write();
@@ -134,6 +144,9 @@ class FacebookCallback extends Controller {
 		if($user) {
 			try {
 				$data = $facebook->api('/me');
+				if(isset($data->error)) {
+					$user = null;
+				}
 			} catch(FacebookApiException $e) {
 				$user = null;
 			}
