@@ -3,9 +3,7 @@
 require_once FACEBOOK_PATH . '/lib/facebook.php';
 
 class FacebookCallback extends Controller {
-	public function Test() {
-		return $this->connectUser('Security/login');
-	}
+	
 	private static $facebook_secret = null;
 	private static $facebook_id = null;
 	
@@ -20,7 +18,6 @@ class FacebookCallback extends Controller {
 	public static $allowed_actions = array(
 		'Connect',
 		'Login',
-		'Test',
 	);
 	
 	public function __construct() {
