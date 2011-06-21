@@ -15,6 +15,25 @@ class FacebookCallback extends Controller {
 		self::$facebook_id = $id;
 	}
 	
+	public static function get_current_user() {
+		$facebook = new Facebook(array(
+			'appId' => self::$facebook_id,
+			'secret' => self::$facebook_secret
+		));
+		$user = $facebook->getUser();
+		if($user) {
+			try {
+				$user_profile = $facebook->api('/me');
+				if(isset($user_profile->error)) {
+					$user = null;
+				}
+			} catch(FacebookApiException $e) {
+				$user = null;
+			}
+		}
+		return $user ? $user_profile : null;
+	}
+	
 	public static $allowed_actions = array(
 		'Connect',
 		'Login',
@@ -27,7 +46,7 @@ class FacebookCallback extends Controller {
 		parent::__construct();
 	}
 	
-	public function connectUser($returnTo = '') {
+	public function connectUser($returnTo = '', Array $extra = array()) {
 		$facebook = new Facebook(array(
 			'appId' => self::$facebook_id,
 			'secret' => self::$facebook_secret
@@ -44,16 +63,16 @@ class FacebookCallback extends Controller {
 			}
 		}
 		$callback = $this->AbsoluteLink('Connect?ret=' . $returnTo);
-		if($user) {
+		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
 			return self::curr()->redirect($facebook->getLoginUrl(array(
 				'redirect_uri' => $callback,
-			)));
+			) + $extra));
 		}
 	}
 	
-	public function loginUser() {
+	public function loginUser(Array $extra = array(), $return = false) {
 		$facebook = new Facebook(array(
 			'appId' => self::$facebook_id,
 			'secret' => self::$facebook_secret
@@ -69,13 +88,13 @@ class FacebookCallback extends Controller {
 				$user = null;
 			}
 		}
-		$callback = $this->AbsoluteLink('Login');
-		if($user) {
+		$callback = $return ? Director::absoluteURL($return) : $this->AbsoluteLink('Login');
+		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
 			return self::curr()->redirect($facebook->getLoginUrl(array(
 				'redirect_uri' => $callback,
-			)));
+			) + $extra));
 		}
 	}
 	
