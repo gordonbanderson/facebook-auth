@@ -114,48 +114,54 @@ class FacebookCallback extends Controller {
 			$user = $facebook->getUser();
 			return $this->redirect($req->getVar('ret'));
 		}
-		if($req->getVar('denied')) {
+		if($req->getVar('denied') || $req->getVar('error_reason') == 'user_denied') {
 			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login cancelled.');
 			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
 			return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
 		}
-		$facebook = new Facebook(array(
-			'appId' => self::$facebook_id,
-			'secret' => self::$facebook_secret
-		));
-		$user = $facebook->getUser();
-		if($user) {
-			try {
-				$data = $facebook->api('/me');
-				if(isset($data->error)) {
-					$user = null;
+		if(!(Member::currentUser() && Member::logged_in_session_exists())) {
+			$facebook = new Facebook(array(
+				'appId' => self::$facebook_id,
+				'secret' => self::$facebook_secret
+			));
+			$user = $facebook->getUser();
+			if($user) {
+				try {
+					$data = $facebook->api('/me');
+					if(isset($data->error)) {
+						Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login error: ' . $data->error->message);
+						Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+						return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+					}
+				} catch(FacebookApiException $e) {
+					Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login error: ' . $e->message);
+					Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+					return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
 				}
-			} catch(FacebookApiException $e) {
-				$user = null;
 			}
+			if(!$user) {
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login cancelled.');
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+			}
+			if(!is_numeric($user)) {
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Invalid user id received from Facebook.');
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+			}
+			$u = DataObject::get_one('Member', '"FacebookID" = \'' . Convert::raw2sql($user) . '\'');
+			if(!$u || !$u->exists()) {
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'No one found for Facebook user ' . $data->name . '.');
+				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+			}
+			
+			if($u->FacebookName != $data->name) {
+				$u->FacebookName = $data->name;
+				$u->write();
+			}
+			$u->login(Session::get('SessionForms.FacebookLoginForm.Remember'));
 		}
-		if(!$user) {
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login cancelled.');
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
-			return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
-		}
-		if(!is_numeric($user)) {
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Invalid user id received from Facebook.');
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
-			return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
-		}
-		$u = DataObject::get_one('Member', '"FacebookID" = \'' . Convert::raw2sql($user) . '\'');
-		if(!$u || !$u->exists()) {
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'No one found for Facebook user ' . $data->name . '.');
-			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
-			return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
-		}
-		
-		if($u->FacebookName != $data->name) {
-			$u->FacebookName = $data->name;
-			$u->write();
-		}
-		$u->login(Session::get('SessionForms.FacebookLoginForm.Remember'));
 		Session::clear('SessionForms.FacebookLoginForm.Remember');
 		$backURL = Session::get('BackURL');
 		Session::clear('BackURL');
@@ -163,31 +169,27 @@ class FacebookCallback extends Controller {
 	}
 	
 	public function Connect(SS_HTTPRequest $req) {
-		if(!$req->getVars()) {
-			$this->httpError(412);
-		}
-		$facebook = new Facebook(array(
-			'appId' => self::$facebook_id,
-			'secret' => self::$facebook_secret
-		));
-		$user = $facebook->getUser();
-		if($user) {
-			try {
-				$data = $facebook->api('/me');
-				if(isset($data->error)) {
+		if($req->getVars() && !$req->getVar('error')) {
+			$facebook = new Facebook(array(
+				'appId' => self::$facebook_id,
+				'secret' => self::$facebook_secret
+			));
+			$user = $facebook->getUser();
+			if($user) {
+				try {
+					$data = $facebook->api('/me');
+					if(isset($data->error)) {
+						$user = null;
+					}
+				} catch(FacebookApiException $e) {
 					$user = null;
 				}
-			} catch(FacebookApiException $e) {
-				$user = null;
 			}
-		}
-		if(!$user) {
-			$this->httpError(412);
-		}
-		if($m = $this->CurrentMember()) {
-			$m->FacebookID = $data->id;
-			$m->FacebookName = $data->name;
-			$m->write();
+			if($user && $m = $this->CurrentMember()) {
+				$m->FacebookID = $data->id;
+				$m->FacebookName = $data->name;
+				$m->write();
+			}
 		}
 		$ret = $req->getVar('ret');
 		if($ret) {
