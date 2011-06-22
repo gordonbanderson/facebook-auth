@@ -16,6 +16,9 @@ class FacebookCallback extends Controller {
 	}
 	
 	public static function get_current_user() {
+		if(self::$facebook_secret == null || self::$facebook_id == null) {
+			user_error('Cannot instigate a FacebookCallback object without an application secret and id', E_USER_ERROR);
+		}
 		$facebook = new Facebook(array(
 			'appId' => self::$facebook_id,
 			'secret' => self::$facebook_secret
@@ -88,7 +91,7 @@ class FacebookCallback extends Controller {
 				$user = null;
 			}
 		}
-		$callback = $return ? Director::absoluteURL($return) : $this->AbsoluteLink('Login');
+		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
@@ -103,6 +106,14 @@ class FacebookCallback extends Controller {
 	}
 	
 	public function Login(SS_HTTPRequest $req) {
+		if($req->getVar('ret')) {
+			$facebook = new Facebook(array(
+				'appId' => self::$facebook_id,
+				'secret' => self::$facebook_secret
+			));
+			$user = $facebook->getUser();
+			return $this->redirect($req->getVar('ret'));
+		}
 		if($req->getVar('denied')) {
 			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'Login cancelled.');
 			Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
