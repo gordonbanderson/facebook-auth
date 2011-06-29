@@ -9,4 +9,29 @@ class FacebookIdentifier extends DataObjectDecorator {
 			)
 		);
 	}
+	
+	public function updateMemberFormFields(FieldSet $fields) {
+		$fields->removeByName('FacebookID');
+		$fields->removeByName('FacebookName');
+		
+		if(Member::CurrentMember() && Member::CurrentMember()->exists()) {
+			$fields->push($f = new ReadonlyField('FacebookButton', 'Facebook'));
+			$f->dontEscape = true;
+		} else {
+			$fields->push(new HiddenField('FacebookButton', false));
+		}
+	}
+	
+	public function getFacebookButton() {
+		if($this->owner->exists()) {
+			Requirements::javascript(THIRDPARTY_DIR . '/jquery/jquery.js');
+			Requirements::javascript(THIRDPARTY_DIR . '/jquery-livequery/jquery.livequery.js');
+			Requirements::javascript('facebook/javascript/facebook.js');
+			if($this->owner->FacebookID) {
+				return 'Connected to Facebook user ' . $this->owner->FacebookName . '. <a href="FacebookCallback/RemoveFacebook" id="RemoveFacebookButton">Disconnect</a>';
+			} else {
+				return '<img src="facebook/Images/connect.png" id="ConnectFacebookButton" alt="Connect to Facebook" />';
+			}
+		}
+	}
 }

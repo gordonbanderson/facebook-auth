@@ -49,6 +49,9 @@ class FacebookCallback extends Controller {
 	public static $allowed_actions = array(
 		'Connect',
 		'Login',
+		'FinishFacebook',
+		'FacebookConnect',
+		'RemoveFacebook',
 	);
 	
 	public function __construct() {
@@ -56,6 +59,29 @@ class FacebookCallback extends Controller {
 			user_error('Cannot instigate a FacebookCallback object without an application secret and id', E_USER_ERROR);
 		}
 		parent::__construct();
+	}
+	
+	public function FinishFacebook() {
+		if($this->CurrentMember()->FacebookID) {
+			return '<script type="text/javascript">//<![CDATA[
+			opener.FacebookResponse(' . \Convert::raw2json(array(
+				'name' => $this->CurrentMember()->FacebookName,
+			)) . ');
+			window.close();
+			//]]></script>';
+		} else {
+			return '<script type="text/javascript">window.close();</script>';
+		}
+	}
+	
+	public function FacebookConnect() {
+		return $this->connectUser($this->Link('FinishFacebook'));
+	}
+	
+	public function RemoveFacebook() {
+		$m = $this->CurrentMember();
+		$m->FacebookID = $m->FacebookName = null;
+		$m->write();
 	}
 	
 	public function connectUser($returnTo = '', Array $extra = array()) {
