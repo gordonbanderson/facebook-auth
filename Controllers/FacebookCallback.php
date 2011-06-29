@@ -6,6 +6,7 @@ class FacebookCallback extends Controller {
 	
 	private static $facebook_secret = null;
 	private static $facebook_id = null;
+	private static $email_fallback = false;
 	
 	public static function set_facebook_secret($secret) {
 		self::$facebook_secret = $secret;
@@ -13,6 +14,14 @@ class FacebookCallback extends Controller {
 	
 	public static function set_facebook_id($id) {
 		self::$facebook_id = $id;
+	}
+	
+	public static function get_email_fallback() {
+		return self::$email_fallback;
+	}
+	
+	public static function set_email_fallback($val) {
+		self::$email_fallback = (bool)$val;
 	}
 	
 	public static function get_current_user() {
@@ -92,6 +101,16 @@ class FacebookCallback extends Controller {
 			}
 		}
 		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
+		if(self::$email_fallback) {
+			if(!$user || !isset($user_profile->email)) {
+				$scope = empty($extra['scope']) ? '' : $extra['scope'];
+				if(strpos($scope, 'email') === false) {
+					if($scope) $scope .= ',';
+					$scope .= 'email';
+				}
+				$extra['scope'] = $scope;
+			}
+		}
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
@@ -150,14 +169,23 @@ class FacebookCallback extends Controller {
 				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
 			}
 			$u = DataObject::get_one('Member', '"FacebookID" = \'' . Convert::raw2sql($user) . '\'');
-			if(!$u || !$u->exists()) {
+			if((!$u || !$u->exists()) && !isset($data->email)) {
 				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'No one found for Facebook user ' . $data->name . '.');
 				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
 				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+			} else {
+				$e = Convert::raw2sql($data->email);
+				$u = DataObject::get_one('Member', '"Email" = \'' . $e . '\'');
+				if(!$u || !$u->exists()) {
+					Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'No one found for Facebook user ' . $data->name . '.');
+					Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
+					return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
+				}
 			}
 			
 			if($u->FacebookName != $data->name) {
 				$u->FacebookName = $data->name;
+				$u->FacebookID = $user;
 				$u->write();
 			}
 			$u->login(Session::get('SessionForms.FacebookLoginForm.Remember'));
