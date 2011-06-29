@@ -1,5 +1,5 @@
 ====================================
- Facebook Authentication Module 0.3
+ Facebook Authentication Module 1.0
          For SilverStripe
 ====================================
 Developed and maintained by RentBox
@@ -22,12 +22,6 @@ This adds two extra fields to the Member table, FacebookID and FacebookName.
 OAuth tokens *are not* stored. You can not use this module for communicating
 with Facebook beyond the sign in process.
 
-This module currently does not provide a way for users to set these values.
-YOU MUST PROVIDE THIS USING THE AVAILABLE METHODS.
-
-This is done by providing a way for users to call connectUser() on a
-FacebookCallback object. This method is not accessible via a URL so you
-must provide this. An action that returns
-singleton('FacebookCallback')->connectUser($this->Link('FinishFacebook'))
-should be all that is needed. The argument to connectUser() is the URL to
-redirect to once the Member record has been updated.
+This module adds a button to MemberFormFields, but not FrontendField. You can
+ your own button as well. For an example of how to do so, have a look at
+FacebookIdentifier, facebook.js and the three related methods in FacebookCallback.
