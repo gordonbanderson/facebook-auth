@@ -199,7 +199,7 @@ class FacebookCallback extends Controller {
 				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.message', 'No one found for Facebook user ' . $data->name . '.');
 				Session::set('FormInfo.FacebookLoginForm_LoginForm.formError.type', 'error');
 				return $this->redirect('Security/login#FacebookLoginForm_LoginForm_tab');
-			} else {
+			} elseif(!$u || !$u->exists()) {
 				$e = Convert::raw2sql($data->email);
 				$u = DataObject::get_one('Member', '"Email" = \'' . $e . '\'');
 				if(!$u || !$u->exists()) {
