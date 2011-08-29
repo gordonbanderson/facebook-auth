@@ -2,7 +2,7 @@
 (function($){
 	window.FacebookResponse = function(data) {
 		if(data.name) {
-			$('#ConnectFacebookButton').replaceWith('Connected to Facebook user ' + data.handle + '. <a href="FacebookCallback/RemoveFacebook" id="RemoveFacebookButton">Disconnect</a>');
+			$('#ConnectFacebookButton').replaceWith('Connected to Facebook user ' + data.name + '. <a href="' + data.removeLink + '" id="RemoveFacebookButton">Disconnect</a>');
 		}
 	};
 	$('#ConnectFacebookButton').livequery('click', function (e) {

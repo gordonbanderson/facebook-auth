@@ -28,7 +28,10 @@ class FacebookIdentifier extends DataObjectDecorator {
 			Requirements::javascript(THIRDPARTY_DIR . '/jquery-livequery/jquery.livequery.js');
 			Requirements::javascript('facebook/javascript/facebook.js');
 			if($this->owner->FacebookID) {
-				return 'Connected to Facebook user ' . $this->owner->FacebookName . '. <a href="FacebookCallback/RemoveFacebook" id="RemoveFacebookButton">Disconnect</a>';
+				$token = SecurityToken::inst();
+				$removeURL = Controller::join_links('FacebookCallback', 'RemoveFacebook');
+				$removeURL = $token->addToUrl($removeURL);
+				return 'Connected to Facebook user ' . $this->owner->FacebookName . '. <a href="' . $removeURL . '" id="RemoveFacebookButton">Disconnect</a>';
 			} else {
 				return '<img src="facebook/Images/connect.png" id="ConnectFacebookButton" alt="Connect to Facebook" />';
 			}

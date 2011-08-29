@@ -61,11 +61,14 @@ class FacebookCallback extends Controller {
 		parent::__construct();
 	}
 	
-	public function FinishFacebook() {
+	public function FinishFacebook($request) {
+		$token = SecurityToken::inst();
+		if(!$token->checkRequest($request)) return $this->httpError(400);
 		if($this->CurrentMember()->FacebookID) {
 			return '<script type="text/javascript">//<![CDATA[
 			opener.FacebookResponse(' . \Convert::raw2json(array(
 				'name' => $this->CurrentMember()->FacebookName,
+				'removeLink' => $token->addToUrl(self::join_links('FacebookCallback', 'RemoveFacebook')),
 			)) . ');
 			window.close();
 			//]]></script>';
@@ -78,7 +81,9 @@ class FacebookCallback extends Controller {
 		return $this->connectUser($this->Link('FinishFacebook'));
 	}
 	
-	public function RemoveFacebook() {
+	public function RemoveFacebook($request) {
+		$token = SecurityToken::inst();
+		if(!$token->checkRequest($request)) return $this->httpError(400);
 		$m = $this->CurrentMember();
 		$m->FacebookID = $m->FacebookName = null;
 		$m->write();
@@ -100,7 +105,14 @@ class FacebookCallback extends Controller {
 				$user = null;
 			}
 		}
+		$token = SecurityToken::inst();
+		if($returnTo) {
+			$returnTo = $token->addToUrl($returnTo); 
+			$returnTo = urlencode($returnTo);
+		}
 		$callback = $this->AbsoluteLink('Connect?ret=' . $returnTo);
+		$callback = $token->addToUrl($callback); 
+		//die($callback);
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
@@ -125,6 +137,10 @@ class FacebookCallback extends Controller {
 			} catch(FacebookApiException $e) {
 				$user = null;
 			}
+		}
+		if($return) {
+			$token = SecurityToken::inst();
+			$return = $token->addToUrl($return); 
 		}
 		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
 		if(self::$email_fallback) {
@@ -223,6 +239,8 @@ class FacebookCallback extends Controller {
 	}
 	
 	public function Connect(SS_HTTPRequest $req) {
+		$token = SecurityToken::inst();
+		if(!$token->checkRequest($req)) return $this->httpError(400);
 		if($req->getVars() && !$req->getVar('error')) {
 			$facebook = new Facebook(array(
 				'appId' => self::$facebook_id,
