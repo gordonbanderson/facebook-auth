@@ -68,7 +68,7 @@ class FacebookCallback extends Controller {
 			return '<script type="text/javascript">//<![CDATA[
 			opener.FacebookResponse(' . \Convert::raw2json(array(
 				'name' => $this->CurrentMember()->FacebookName,
-				'removeLink' => $token->addToUrl(self::join_links('FacebookCallback', 'RemoveFacebook')),
+				'removeLink' => $token->addToUrl($this->Link('RemoveFacebook')),
 			)) . ');
 			window.close();
 			//]]></script>';
@@ -111,8 +111,8 @@ class FacebookCallback extends Controller {
 			$returnTo = urlencode($returnTo);
 		}
 		$callback = $this->AbsoluteLink('Connect?ret=' . $returnTo);
-		$callback = $token->addToUrl($callback); 
-		//die($callback);
+		$callback = $token->addToUrl($callback);
+		
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
@@ -138,11 +138,13 @@ class FacebookCallback extends Controller {
 				$user = null;
 			}
 		}
+		$token = SecurityToken::inst();
 		if($return) {
-			$token = SecurityToken::inst();
-			$return = $token->addToUrl($return); 
+			$return = $token->addToUrl($return);
+			$return = urlencode($return);
 		}
 		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
+		$callback = $token->addToUrl($callback);
 		if(self::$email_fallback) {
 			if(!$user || !isset($user_profile->email)) {
 				$scope = empty($extra['scope']) ? '' : $extra['scope'];
@@ -167,6 +169,8 @@ class FacebookCallback extends Controller {
 	}
 	
 	public function Login(SS_HTTPRequest $req) {
+		$token = SecurityToken::inst();
+		if(!$token->checkRequest($req)) return $this->httpError(400);
 		if($req->getVar('ret')) {
 			$facebook = new Facebook(array(
 				'appId' => self::$facebook_id,
