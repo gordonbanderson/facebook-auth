@@ -268,7 +268,7 @@ class FacebookCallback extends Controller {
 			} else {
 				Session::set('Facebook' , array(
 					'ID' => $data->id,
-					'Name' => $data->screen_name,
+					'Name' => $data->name,
 				));
 			}
 		}
