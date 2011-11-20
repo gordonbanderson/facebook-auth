@@ -265,6 +265,11 @@ class FacebookCallback extends Controller {
 				$m->FacebookID = $data->id;
 				$m->FacebookName = $data->name;
 				$m->write();
+			} else {
+				Session::set('Facebook' , array(
+					'ID' => $data->id,
+					'Name' => $data->screen_name,
+				));
 			}
 		}
 		$ret = $req->getVar('ret');
