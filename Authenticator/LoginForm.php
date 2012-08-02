@@ -10,15 +10,15 @@ class FacebookLoginForm extends LoginForm {
 			$backURL = Session::get('BackURL');
 		}
 		if($checkCurrentUser && Member::currentUser() && Member::logged_in_session_exists()) {
-			$fields = new FieldSet(
+			$fields = new FieldList(
 				new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this)
 			);
-			$actions = new FieldSet(
+			$actions = new FieldList(
 				new FormAction("logout", _t('Member.BUTTONLOGINOTHER', "Log in as someone else"))
 			);
 		} else {
 			if(!$fields) {
-				$fields = new FieldSet(
+				$fields = new FieldList(
 					new HiddenField("AuthenticationMethod", null, $this->authenticator_class, $this)
 				);
 				if(Security::$autologin_enabled) {
@@ -31,8 +31,8 @@ class FacebookLoginForm extends LoginForm {
 				}
 			}
 			if(!$actions) {
-				$actions = new FieldSet(
-					new ImageFormAction('dologin', 'Sign in with Facebook', 'facebook/Images/signin.png')
+				$actions = new FieldList(
+					FormAction::create('dologin', 'Sign in with Facebook')->setAttribute('src', 'facebook/Images/signin.png')
 				);
 			}
 		}

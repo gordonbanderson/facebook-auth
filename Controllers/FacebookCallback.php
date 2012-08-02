@@ -7,13 +7,30 @@ class FacebookCallback extends Controller {
 	private static $facebook_secret = null;
 	private static $facebook_id = null;
 	private static $email_fallback = false;
+	private static $permissions = array();
+
+	public static function set_permissions($perms) {
+		self::$permissions = $perms;
+	}
+
+	public static function get_permissions() {
+		return self::$permissions;
+	}
 	
 	public static function set_facebook_secret($secret) {
 		self::$facebook_secret = $secret;
 	}
+
+	public static function get_facebook_secret() {
+		return self::$facebook_secret;
+	}
 	
 	public static function set_facebook_id($id) {
 		self::$facebook_id = $id;
+	}
+
+	public static function get_facebook_id() {
+		return self::$facebook_id;
 	}
 	
 	public static function get_email_fallback() {
@@ -64,10 +81,13 @@ class FacebookCallback extends Controller {
 	public function FinishFacebook($request) {
 		$token = SecurityToken::inst();
 		if(!$token->checkRequest($request)) return $this->httpError(400);
-		if($this->CurrentMember()->FacebookID) {
+		
+		$member = Member::currentUser();
+		if($memebr && $member->FacebookID) {
 			return '<script type="text/javascript">//<![CDATA[
 			opener.FacebookResponse(' . \Convert::raw2json(array(
-				'name' => $this->CurrentMember()->FacebookName,
+				'name' => $member->FacebookName,
+				'pages' => $member->getFacebookPages(),
 				'removeLink' => $token->addToUrl($this->Link('RemoveFacebook')),
 			)) . ');
 			window.close();
@@ -84,9 +104,11 @@ class FacebookCallback extends Controller {
 	public function RemoveFacebook($request) {
 		$token = SecurityToken::inst();
 		if(!$token->checkRequest($request)) return $this->httpError(400);
-		$m = $this->CurrentMember();
-		$m->FacebookID = $m->FacebookName = null;
-		$m->write();
+		$m = Member::currentUser();
+		if($m) {
+			$m->FacebookID = $m->FacebookName = null;
+			$m->write();
+		}
 	}
 	
 	public function connectUser($returnTo = '', Array $extra = array()) {
@@ -112,6 +134,12 @@ class FacebookCallback extends Controller {
 		}
 		$callback = $this->AbsoluteLink('Connect?ret=' . $returnTo);
 		$callback = $token->addToUrl($callback);
+
+		if(self::get_permissions()) {
+			$extra += array(
+				'scope' => implode(', ', self::get_permissions())
+			);
+		}
 		
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
@@ -145,16 +173,25 @@ class FacebookCallback extends Controller {
 		}
 		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
 		$callback = $token->addToUrl($callback);
+		if(self::get_permissions()) {
+			$perms = self::get_permissions();
+		} else {
+			$perms = array();
+		}
 		if(self::$email_fallback) {
 			if(!$user || !isset($user_profile->email)) {
-				$scope = empty($extra['scope']) ? '' : $extra['scope'];
-				if(strpos($scope, 'email') === false) {
-					if($scope) $scope .= ',';
-					$scope .= 'email';
+				if(!in_array('email', $perms)) {
+					$perms[] = 'email';
 				}
-				$extra['scope'] = $scope;
 			}
 		}
+
+		if($perms) {
+			$extra += array(
+				'scope' => implode(', ', $perms)
+			);
+		}
+
 		if($user && empty($extra)) {
 			return self::curr()->redirect($callback);
 		} else {
@@ -189,6 +226,7 @@ class FacebookCallback extends Controller {
 				'appId' => self::$facebook_id,
 				'secret' => self::$facebook_secret
 			));
+
 			$user = $facebook->getUser();
 			if($user) {
 				try {
@@ -250,26 +288,17 @@ class FacebookCallback extends Controller {
 				'appId' => self::$facebook_id,
 				'secret' => self::$facebook_secret
 			));
-			$user = $facebook->getUser();
-			if($user) {
-				try {
-					$data = $facebook->api('/me');
-					if(isset($data->error)) {
-						$user = null;
-					}
-				} catch(FacebookApiException $e) {
-					$user = null;
+			try {
+				$data = $facebook->api('/me');
+
+				if(isset($data->error)) {
+					SS_Log::log($data->error->message, SS_Log::WARN);
+				} elseif($m = Member::currentUser()) {
+					$m->FacebookID = $data->id;
+					$m->FacebookName = $data->name;
 				}
-			}
-			if($user && $m = $this->CurrentMember()) {
-				$m->FacebookID = $data->id;
-				$m->FacebookName = $data->name;
-				$m->write();
-			} else {
-				Session::set('Facebook' , array(
-					'ID' => $data->id,
-					'Name' => $data->name,
-				));
+			} catch(FacebookApiException $e) {
+				SS_Log::log($e, SS_Log::WARN);
 			}
 		}
 		$ret = $req->getVar('ret');
