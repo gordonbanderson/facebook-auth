@@ -1,0 +1,6 @@
+name: facebook
+---
+Member:
+  extensions:
+    FacebookIdentifier:
+      FacebookIdentifier

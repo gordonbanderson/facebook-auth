@@ -42,8 +42,8 @@ class FacebookIdentifier extends DataExtension {
 		require_once FACEBOOK_PATH . '/lib/facebook.php';
 
 		$facebook = new Facebook(array(
-			'appId' => FacebookCallback::get_facebook_id(),
-			'secret' => FacebookCallback::get_facebook_secret()
+			'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+			'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 		));
 
 		return (bool)$facebook->getUser();
@@ -59,8 +59,8 @@ class FacebookIdentifier extends DataExtension {
 		);
 
 		$facebook = new Facebook(array(
-			'appId' => FacebookCallback::get_facebook_id(),
-			'secret' => FacebookCallback::get_facebook_secret()
+			'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+			'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 		));
 
 		$user = $facebook->getUser();
@@ -70,7 +70,7 @@ class FacebookIdentifier extends DataExtension {
 				$resp = $facebook->api('/me/accounts', 'GET');
 
 				if(isset($resp->data)) {
-					foreach($res->data as $app) {
+					foreach($resp->data as $app) {
 						if($app->category != 'Application') {
 							$pages[$app->id] = $app->name . ' <small>(' . $app->category . ')</small>';
 						}

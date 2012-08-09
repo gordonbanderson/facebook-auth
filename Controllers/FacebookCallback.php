@@ -4,50 +4,56 @@ require_once FACEBOOK_PATH . '/lib/facebook.php';
 
 class FacebookCallback extends Controller {
 	
-	private static $facebook_secret = null;
-	private static $facebook_id = null;
-	private static $email_fallback = false;
-	private static $permissions = array();
-
-	public static function set_permissions($perms) {
-		self::$permissions = $perms;
-	}
-
 	public static function get_permissions() {
-		return self::$permissions;
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		$perms = Config::inst()->get('FacebookCallback', 'permissions');
+		if(!is_array($perms)) return array($perms);
+		return $perms;
 	}
 	
-	public static function set_facebook_secret($secret) {
-		self::$facebook_secret = $secret;
+	public static function set_permissions($perms) {
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		if(!is_array($perms)) $perms = array($perms);
+		Config::inst()->set('FacebookCallback', 'permissions', $perms);
 	}
 
 	public static function get_facebook_secret() {
-		return self::$facebook_secret;
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		return Config::inst()->get('FacebookCallback', 'facebook_secret');
 	}
 	
-	public static function set_facebook_id($id) {
-		self::$facebook_id = $id;
+	public static function set_facebook_secret($secret) {
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		Config::inst()->set('FacebookCallback', 'facebook_secret', $secret);
 	}
 
 	public static function get_facebook_id() {
-		return self::$facebook_id;
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		return Config::inst()->get('FacebookCallback', 'facebook_id');
 	}
 	
+	public static function set_facebook_id($id) {
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		Config::inst()->set('FacebookCallback', 'facebook_id', $id);
+	}
+
 	public static function get_email_fallback() {
-		return self::$email_fallback;
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		return Config::inst()->get('FacebookCallback', 'email_fallback');
 	}
 	
 	public static function set_email_fallback($val) {
-		self::$email_fallback = (bool)$val;
+		Deprecation::notice('2.0', 'Use Config API instead.');
+		Config::inst()->set('FacebookCallback', 'email_fallback', (bool)$val);
 	}
 	
 	public static function get_current_user() {
-		if(self::$facebook_secret == null || self::$facebook_id == null) {
+		if(!Config::inst()->get('FacebookCallback', 'facebook_secret') || !Config::inst()->get('FacebookCallback', 'facebook_id')) {
 			user_error('Cannot instigate a FacebookCallback object without an application secret and id', E_USER_ERROR);
 		}
 		$facebook = new Facebook(array(
-			'appId' => self::$facebook_id,
-			'secret' => self::$facebook_secret
+			'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+			'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 		));
 		$user = $facebook->getUser();
 		if($user) {
@@ -72,7 +78,7 @@ class FacebookCallback extends Controller {
 	);
 	
 	public function __construct() {
-		if(self::$facebook_secret == null || self::$facebook_id == null) {
+		if(!Config::inst()->get('FacebookCallback', 'facebook_secret') || !Config::inst()->get('FacebookCallback', 'facebook_id')) {
 			user_error('Cannot instigate a FacebookCallback object without an application secret and id', E_USER_ERROR);
 		}
 		parent::__construct();
@@ -83,7 +89,8 @@ class FacebookCallback extends Controller {
 		if(!$token->checkRequest($request)) return $this->httpError(400);
 		
 		$member = Member::currentUser();
-		if($memebr && $member->FacebookID) {
+		// var_dump($member);die();
+		if($member && $member->FacebookID) {
 			return '<script type="text/javascript">//<![CDATA[
 			opener.FacebookResponse(' . \Convert::raw2json(array(
 				'name' => $member->FacebookName,
@@ -113,8 +120,8 @@ class FacebookCallback extends Controller {
 	
 	public function connectUser($returnTo = '', Array $extra = array()) {
 		$facebook = new Facebook(array(
-			'appId' => self::$facebook_id,
-			'secret' => self::$facebook_secret
+			'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+			'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 		));
 		$user = $facebook->getUser();
 		if($user) {
@@ -135,9 +142,9 @@ class FacebookCallback extends Controller {
 		$callback = $this->AbsoluteLink('Connect?ret=' . $returnTo);
 		$callback = $token->addToUrl($callback);
 
-		if(self::get_permissions()) {
+		if(Config::inst()->get('FacebookCallback', 'permissions')) {
 			$extra += array(
-				'scope' => implode(', ', self::get_permissions())
+				'scope' => implode(', ', Config::inst()->get('FacebookCallback', 'permissions'))
 			);
 		}
 		
@@ -152,8 +159,8 @@ class FacebookCallback extends Controller {
 	
 	public function loginUser(Array $extra = array(), $return = false) {
 		$facebook = new Facebook(array(
-			'appId' => self::$facebook_id,
-			'secret' => self::$facebook_secret
+			'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+			'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 		));
 		$user = $facebook->getUser();
 		if($user) {
@@ -173,12 +180,12 @@ class FacebookCallback extends Controller {
 		}
 		$callback = $this->AbsoluteLink('Login' . ($return ? '?ret=' . $return : ''));
 		$callback = $token->addToUrl($callback);
-		if(self::get_permissions()) {
-			$perms = self::get_permissions();
+		if(Config::inst()->get('FacebookCallback', 'permissions')) {
+			$perms = Config::inst()->get('FacebookCallback', 'permissions');
 		} else {
 			$perms = array();
 		}
-		if(self::$email_fallback) {
+		if(Config::inst()->get('FacebookCallback', 'email_fallback')) {
 			if(!$user || !isset($user_profile->email)) {
 				if(!in_array('email', $perms)) {
 					$perms[] = 'email';
@@ -210,8 +217,8 @@ class FacebookCallback extends Controller {
 		if(!$token->checkRequest($req)) return $this->httpError(400);
 		if($req->getVar('ret')) {
 			$facebook = new Facebook(array(
-				'appId' => self::$facebook_id,
-				'secret' => self::$facebook_secret
+				'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+				'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 			));
 			$user = $facebook->getUser();
 			return $this->redirect($req->getVar('ret'));
@@ -223,8 +230,8 @@ class FacebookCallback extends Controller {
 		}
 		if(!(Member::currentUser() && Member::logged_in_session_exists())) {
 			$facebook = new Facebook(array(
-				'appId' => self::$facebook_id,
-				'secret' => self::$facebook_secret
+				'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+				'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 			));
 
 			$user = $facebook->getUser();
@@ -285,8 +292,8 @@ class FacebookCallback extends Controller {
 		if(!$token->checkRequest($req)) return $this->httpError(400);
 		if($req->getVars() && !$req->getVar('error')) {
 			$facebook = new Facebook(array(
-				'appId' => self::$facebook_id,
-				'secret' => self::$facebook_secret
+				'appId' => Config::inst()->get('FacebookCallback', 'facebook_id'),
+				'secret' => Config::inst()->get('FacebookCallback', 'facebook_secret')
 			));
 			try {
 				$data = $facebook->api('/me');
@@ -296,6 +303,7 @@ class FacebookCallback extends Controller {
 				} elseif($m = Member::currentUser()) {
 					$m->FacebookID = $data->id;
 					$m->FacebookName = $data->name;
+					$m->write();
 				}
 			} catch(FacebookApiException $e) {
 				SS_Log::log($e, SS_Log::WARN);

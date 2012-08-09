@@ -42,7 +42,7 @@
 		$.get($(this).attr('href'));
 
 		$('.unconnect-facebook').each(function (i, elem) {
-			$(elem).parent().html('<img src="facebook/Images/connect.png" id="ConnectFacebookButton" alt="Connect to Facebook" />');
+			$(elem).parent().html('<img src="facebook/Images/connect.png" class="connect-facebook" alt="Connect to Facebook" />');
 		});
 
 		$("body").trigger("authchanged");
