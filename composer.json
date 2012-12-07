@@ -1,0 +1,16 @@
+{
+    "name": "pocketrent/silverstripe-facebook",
+    "type": "silverstripe-module",
+    "description": "Facebook auth",
+    "keywords": ["silverstripe","facebook", "authentication"],
+    "homepage": "https://svn.pocketrent.com/public/facebook/",
+    "license": "BSD",
+    "authors": [{
+        "name": "Simon Welsh",
+        "homepage": "https://pocketrent.com"
+    }],
+    "require": {
+        "silverstripe/framework": ">=3.0.0"
+    },
+    "version": "2.1-dev"
+}
