@@ -14,7 +14,7 @@ class FacebookCallback extends Controller {
 	public static function set_permissions($perms) {
 		Deprecation::notice('2.0', 'Use Config API instead.');
 		if(!is_array($perms)) $perms = array($perms);
-		Config::inst()->set('FacebookCallback', 'permissions', $perms);
+		Config::inst()->update('FacebookCallback', 'permissions', $perms);
 	}
 
 	public static function get_facebook_secret() {
@@ -24,7 +24,7 @@ class FacebookCallback extends Controller {
 	
 	public static function set_facebook_secret($secret) {
 		Deprecation::notice('2.0', 'Use Config API instead.');
-		Config::inst()->set('FacebookCallback', 'facebook_secret', $secret);
+		Config::inst()->update('FacebookCallback', 'facebook_secret', $secret);
 	}
 
 	public static function get_facebook_id() {
@@ -34,7 +34,7 @@ class FacebookCallback extends Controller {
 	
 	public static function set_facebook_id($id) {
 		Deprecation::notice('2.0', 'Use Config API instead.');
-		Config::inst()->set('FacebookCallback', 'facebook_id', $id);
+		Config::inst()->update('FacebookCallback', 'facebook_id', $id);
 	}
 
 	public static function get_email_fallback() {
@@ -44,7 +44,7 @@ class FacebookCallback extends Controller {
 	
 	public static function set_email_fallback($val) {
 		Deprecation::notice('2.0', 'Use Config API instead.');
-		Config::inst()->set('FacebookCallback', 'email_fallback', (bool)$val);
+		Config::inst()->update('FacebookCallback', 'email_fallback', (bool)$val);
 	}
 	
 	public static function get_current_user() {
