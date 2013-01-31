@@ -32,7 +32,7 @@ class FacebookLoginForm extends LoginForm {
 			}
 			if(!$actions) {
 				$actions = new FieldList(
-					FormAction::create('dologin', 'Sign in with Facebook')->setAttribute('src', 'facebook/Images/signin.png')
+					FormAction::create('dologin', 'Sign in with Facebook')->setAttribute('src', FACEBOOK_URL_PATH.'/Images/signin.png')
 				);
 			}
 		}
