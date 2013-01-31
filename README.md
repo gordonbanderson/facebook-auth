@@ -6,8 +6,7 @@ Developed and maintained by PocketRent
 Some alterations by Gordon Anderson, Web of Talent / gordon@weboftalent.asia
 
 # Requirements:
-* Facebook application id/secret
-	- https://www.facebook.com/developers/apps.php
+* Facebook application id/secrets, available from https://www.facebook.com/developers/apps.php
 
 # Installation:
 - Extract facebook folder to your site root
@@ -16,6 +15,16 @@ Some alterations by Gordon Anderson, Web of Talent / gordon@weboftalent.asia
 - Run /dev/build
 
 This adds two extra fields to the Member table, FacebookID and FacebookName.
+
+# Configuration
+In mysite/_config/facebook.yml either create or append the following:
+
+		FacebookCallback:
+		  facebook_id: '<YOUR FACEBOOK APP ID>'
+		  facebook_secret: '<YOUR FACEBOOK SECRET>'
+
+
+# Functionality
 
 This module adds a button to MemberFormFields, but not FrontendField. You can
  your own button as well. For an example of how to do so, have a look at
