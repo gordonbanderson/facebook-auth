@@ -1,16 +1,15 @@
-======================================
- Facebook Authentication Module 2.1
-         For SilverStripe
-======================================
+# Facebook Authentication Module 2.1 For SilverStripe
+
 Developed and maintained by PocketRent
   support@pocketrent.com/@PocketRent
-======================================
 
-Requirements:
+Some alterations by Gordon Anderson, Web of Talent / gordon@weboftalent.asia
+
+# Requirements:
 * Facebook application id/secret
 	- https://www.facebook.com/developers/apps.php
 
-Installation:
+# Installation:
 - Extract facebook folder to your site root
 - Provide your application id/secret using the Config API
 	(FacebookCallback->facebook_id/secret)
