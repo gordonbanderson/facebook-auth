@@ -1,6 +1,8 @@
 <?php
 
 define('FACEBOOK_PATH', __DIR__);
+define('FACEBOOK_URL_PATH', rtrim(basename(dirname(__FILE__))));
+
 
 Authenticator::register_authenticator('FacebookAuthenticator');
 
